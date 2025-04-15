@@ -16,7 +16,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
 def get_user(username: str):
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
     row = cursor.fetchone()
-    logger.info({"id": row[0], "username": row[1], "hashed_password": row[2]})
+    #logger.info({"id": row[0], "username": row[1], "hashed_password": row[2]})
     return {"id": row[0], "username": row[1], "hashed_password": row[2]} if row else None
 
 def verify_password(plain_password, hashed_password):
