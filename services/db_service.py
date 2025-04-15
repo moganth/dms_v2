@@ -1,5 +1,9 @@
 import sqlite3
 
+from logger import get_logger
+
+logger = get_logger(__name__)
+
 db = sqlite3.connect("users.db", check_same_thread=False)
 cursor = db.cursor()
 
@@ -12,3 +16,4 @@ def init_db():
     )
     """)
     db.commit()
+    logger.info("DataBase Created Successfully")
