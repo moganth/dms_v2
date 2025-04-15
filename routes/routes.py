@@ -155,7 +155,7 @@ def remove_container(payload: ContainerRunRequest,
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/logs/{container_name}")
-def get_logs(container_name: str = Query(...),
+def get_logs(container_name: str,
              current_user: dict = Depends(get_current_user)):
     return ds.get_logs(container_name)
 
