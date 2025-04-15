@@ -9,7 +9,7 @@ from config import SECRET_KEY, ALGORITHM
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
 
 def get_user(username: str):
     cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
