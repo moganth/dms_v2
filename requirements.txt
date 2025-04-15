@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pydantic
+docker
+python-multipart
+python-jose[cryptography]
+passlib[bcrypt]
