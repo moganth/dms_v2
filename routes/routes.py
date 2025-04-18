@@ -12,7 +12,7 @@ from services.docker_service import build_image_from_repo
 from services.db_service import db
 from services.db_service import cursor
 from services.auth_service import get_user, authenticate_user
-from config import ACCESS_TOKEN_EXPIRE_MINUTES, LOG_FILE
+from config import ACCESS_TOKEN_EXPIRE_MINUTES, LOG_FILE, LOG_DIR
 from services.auth_service import get_current_user, create_access_token, get_password_hash
 
 from logger import get_logger
@@ -218,12 +218,13 @@ def delete_docker_volume(current_user: dict = Depends(get_current_user),
 
 @router.get("/logs", response_class=PlainTextResponse)
 def read_logs(current_user: dict = Depends(get_current_user)):
-    if not os.path.exists(LOG_FILE):
+    log_path = os.path.join(LOG_DIR, LOG_FILE)
+    if not os.path.exists(log_path):
         logger.error("Log file not found")
         raise HTTPException(status_code=404, detail="Log file not found")
 
     try:
-        with open(LOG_FILE, "r") as log_file:
+        with open(log_path, "r") as log_file:
             log_content = log_file.read()
             return log_content
     except Exception as e:
