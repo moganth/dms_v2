@@ -125,7 +125,7 @@ def delete_image(image_name: str):
 def get_logs(container_name: str):
     try:
         container = client.containers.get(container_name)
-        logs = container.logs().decode('utf-8')
+        logs = container.logs(timestamps=True).decode('utf-8')
         log_lines = logs.strip().split('\n')
         return {"container": container_name, "logs": log_lines}
     except Exception as e:
