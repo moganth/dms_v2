@@ -184,7 +184,11 @@ def remove_container(payload: ContainerRunRequest,
 def get_logs(container_name: str,
              current_user: dict = Depends(get_current_user)):
     logger.info(f"Container logs listed by {current_user['username']} on {container_name}")
-    return ds.get_logs(container_name)
+    try:
+        return ds.get_logs(container_name)
+    except Exception as e:
+        logger.error(f"Error getting logs for container {container_name}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/ps")
 def docker_ps(current_user: dict = Depends(get_current_user)):
