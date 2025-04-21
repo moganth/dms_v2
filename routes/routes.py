@@ -1,12 +1,14 @@
 import os
 import docker
-from fastapi import HTTPException, APIRouter, Depends, Query
+from fastapi import HTTPException, APIRouter, Depends, Query, Request
 from fastapi.responses import PlainTextResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 
-from schemas.docker_schema import (DockerImageSchema, DockerLoginSchema, BuildImagePayload, PushImagePayload,
-                                   PullImagePayload, ContainerRunRequest, VolumeSchema, BuildRequest, User, Token,)
+# from schemas.docker_schema import (DockerImageSchema, DockerLoginSchema, BuildImagePayload, PushImagePayload,
+#                                    PullImagePayload, ContainerRunRequest, VolumeSchema, BuildRequest, User, Token)
+from schemas.docker_schema import *
+
 from services import docker_service as ds
 from services.docker_service import build_image_from_repo
 from services.db_service import db
@@ -15,6 +17,9 @@ from services.auth_service import get_user, authenticate_user
 from config import ACCESS_TOKEN_EXPIRE_MINUTES, LOG_FILE, LOG_DIR
 from services.auth_service import get_current_user, create_access_token, get_password_hash
 
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
 from logger import get_logger
 logger = get_logger(__name__)
 
@@ -22,8 +27,12 @@ logger = get_logger(__name__)
 client = docker.from_env()
 router = APIRouter()
 
+limiter = Limiter(key_func=get_remote_address)
+
 @router.post("/login")
+@limiter.limit("5/minute")
 def login_to_docker(payload: DockerLoginSchema,
+                    request: Request,
                     current_user: dict = Depends(get_current_user)):
     logger.info(f"Login successful by {current_user['username']} ")
     return ds.docker_login(payload.username, payload.password)

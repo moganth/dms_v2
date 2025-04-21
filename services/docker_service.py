@@ -70,7 +70,7 @@ def build_image_from_repo(github_url: str, image_name: str, repo_name: str):
 
         # Build the Docker image
         build_command = ["docker", "build", "-t", image_name, destination_dir]
-
+ 
         # Run the build command
         build_response = run_command(build_command)
         return build_response
