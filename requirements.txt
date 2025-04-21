@@ -6,3 +6,6 @@ python-multipart
 python-jose[cryptography]
 passlib[bcrypt]
 slowapi
+pymongo
+motor
+python-dotenv

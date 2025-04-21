@@ -4,7 +4,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 
-from services.db_service import cursor
+from services.db_service import get_user_by_username
 from config import SECRET_KEY, ALGORITHM
 from logger import get_logger
 
@@ -14,14 +14,26 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
 
 def get_user(username: str):
-    cursor.execute("SELECT * FROM users WHERE username = ?", (username,))
-    row = cursor.fetchone()
-    logger.info("Got_User")
-    return {"id": row[0], "username": row[1], "hashed_password": row[2]} if row else None
+    user = get_user_by_username(username)
+    if user:
+        # Convert MongoDB _id to string if needed for JWT
+        user_dict = {
+            "id": str(user["_id"]),
+            "username": user["username"],
+            "hashed_password": user["hashed_password"]
+        }
+        logger.info(f"User found: {username}")
+        return user_dict
+    logger.info(f"User not found: {username}")
+    return None
 
 def verify_password(plain_password, hashed_password):
-    logger.info("Password verified successfully")
-    return pwd_context.verify(plain_password, hashed_password)
+    result = pwd_context.verify(plain_password, hashed_password)
+    if result:
+        logger.info("Password verified successfully")
+    else:
+        logger.info("Password verification failed")
+    return result
 
 def get_password_hash(password):
     logger.info("Password hashed successfully")
@@ -40,7 +52,7 @@ def authenticate_user(username: str, password: str):
     if not user or not verify_password(password, user["hashed_password"]):
         logger.error("Password or user is Invalid")
         return False
-    logger.info(f"{user} Authenticated")
+    logger.info(f"User {username} Authenticated")
     return user
 
 def get_current_user(token: str = Depends(oauth2_scheme)):

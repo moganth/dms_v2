@@ -11,8 +11,7 @@ from schemas.docker_schema import *
 
 from services import docker_service as ds
 from services.docker_service import build_image_from_repo
-from services.db_service import db
-from services.db_service import cursor
+from services.db_service import db, get_user_by_username, insert_user
 from services.auth_service import get_user, authenticate_user
 from config import ACCESS_TOKEN_EXPIRE_MINUTES, LOG_FILE, LOG_DIR
 from services.auth_service import get_current_user, create_access_token, get_password_hash
@@ -252,15 +251,13 @@ def read_logs(current_user: dict = Depends(get_current_user)):
 
 @router.post("/register", status_code=201)
 def register(user: User):
-    if get_user(user.username):
+    if get_user_by_username(user.username):
         logger.error("Username already registered")
         raise HTTPException(status_code=400, detail="Username already registered")
     hashed_password = get_password_hash(user.password)
-    cursor.execute("INSERT INTO users (username, hashed_password) VALUES (?, ?)",
-                   (user.username, hashed_password))
-    db.commit()
-    logger.info({"User registered successfully"})
-    return {"message": "User registered successfully"}
+    user_id = insert_user(user.username, hashed_password)
+    logger.info(f"User registered successfully with ID: {user_id}")
+    return {"message": "User registered successfully", "user_id": user_id}
 
 @router.post("/token", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends()):
