@@ -104,6 +104,7 @@ def pull_image(payload: PullImagePayload,
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/images")
+@limiter.limit("5/minute")
 def list_all_images(current_user: dict = Depends(get_current_user)):
     logger.info(f"Images listed by {current_user['username']}")
     return ds.list_images()
@@ -190,6 +191,7 @@ def remove_container(payload: ContainerRunRequest,
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/logs/{container_name}")
+@limiter.limit("5/minute")
 def get_logs(container_name: str,
              current_user: dict = Depends(get_current_user)):
     logger.info(f"Container logs listed by {current_user['username']} on {container_name}")
