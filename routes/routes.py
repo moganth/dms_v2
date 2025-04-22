@@ -176,7 +176,7 @@ def restart_container(payload: ContainerRunRequest,
 
 @router.post("/container/remove")
 def remove_container(payload: ContainerRunRequest,
-                     current_user: dict = Depends(role_required["admin"])):
+                     current_user: dict = Depends(role_required(["admin"]))):
     try:
         result = ds.remove_container(payload.container_name)
         logger.info(f"container '{payload.container_name}' deleted successfully by {current_user['username']}")
@@ -192,7 +192,7 @@ def remove_container(payload: ContainerRunRequest,
 @limiter.limit("5/minute")
 def get_logs(container_name: str,
              request: Request,
-             current_user: dict = Depends(role_required["admin", "user"])):
+             current_user: dict = Depends(role_required(["admin", "user"]))):
     logger.info(f"Container logs listed by {current_user['username']} on {container_name}")
     try:
         return ds.get_logs(container_name)
