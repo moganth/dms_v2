@@ -8,6 +8,8 @@ from services.db_service import get_user_by_username
 from config import SECRET_KEY, ALGORITHM
 from logger import get_logger
 
+from typing import List
+
 logger = get_logger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -27,9 +29,6 @@ def get_user(username: str):
         return user_dict
     logger.info(f"User not found: {username}")
     return None
-
-from typing import List
-from fastapi import HTTPException, status
 
 def get_user_role(user: dict) -> str:
     """Extract role from user dictionary"""
@@ -76,28 +75,6 @@ def authenticate_user(username: str, password: str):
         return False
     logger.info(f"User {username} Authenticated")
     return user
-
-# def get_current_user(token: str = Depends(oauth2_scheme)):
-#     credentials_exception = HTTPException(
-#         status_code=status.HTTP_401_UNAUTHORIZED,
-#         detail="Could not validate credentials",
-#         headers={"WWW-Authenticate": "Bearer"},
-#     )
-#     try:
-#         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-#         username: str = payload.get("sub")
-#         if username is None:
-#             logger.error(f"Username not found")
-#             raise credentials_exception
-#     except JWTError:
-#         logger.error(f"{credentials_exception}")
-#         raise credentials_exception
-#     user = get_user(username)
-#     if user is None:
-#         logger.error(f"{credentials_exception}")
-#         raise credentials_exception
-#     return user
-
 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(

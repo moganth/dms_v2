@@ -1,5 +1,8 @@
 from fastapi import FastAPI
-from routes.routes import router
+from routes.container_route import container_router as con_router
+from routes.auth_route import auth_router
+from routes.image_route import image_router as img_router
+from routes.volume_route import volume_router as vol_router
 import uvicorn
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -16,7 +19,11 @@ app = FastAPI(openapi_url="/api/openapi.json",
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-app.include_router(router, prefix="/api")
+
+app.include_router(auth_router, prefix="/api")
+app.include_router(img_router, prefix="/api")
+app.include_router(con_router, prefix="/api")
+app.include_router(vol_router, prefix="/api")
 
 @app.on_event("startup")
 def startup_db():
