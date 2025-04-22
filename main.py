@@ -14,16 +14,19 @@ limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(openapi_url="/api/openapi.json",
     docs_url="/api/docs",
-    redoc_url="/api/redoc"
+    redoc_url="/api/redoc",
+    title="Docker Management API",
+    description="APIs to manage Docker Images, Containers, and Volumes",
+    version="1.0.0"
 )
 
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-app.include_router(auth_router, prefix="/api")
-app.include_router(img_router, prefix="/api")
-app.include_router(con_router, prefix="/api")
-app.include_router(vol_router, prefix="/api")
+app.include_router(auth_router, prefix="/api", tags=["Authentication Operations"])
+app.include_router(img_router, prefix="/api", tags=["Image Operations"])
+app.include_router(con_router, prefix="/api", tags=["Container Operations"])
+app.include_router(vol_router, prefix="/api", tags=["Volume Operations"])
 
 @app.on_event("startup")
 def startup_db():
