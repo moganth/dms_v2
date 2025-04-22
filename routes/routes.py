@@ -253,7 +253,7 @@ def register(user: User):
         logger.error("Username already registered")
         raise HTTPException(status_code=400, detail="Username already registered")
     hashed_password = get_password_hash(user.password)
-    user_id = insert_user(user.username, hashed_password)
+    user_id = insert_user(user.username, hashed_password, user.role)
     logger.info(f"User registered successfully with ID: {user_id}")
     return {"message": "User registered successfully", "user_id": user_id}
 
