@@ -49,14 +49,15 @@ def get_user_by_username(username: str):
     return user
 
 
-def insert_user(username: str, hashed_password: str):
-    """Insert a new user into the database"""
+def insert_user(username: str, hashed_password: str, role: str = "user"):
+    """Insert a new user into the database with role"""
     try:
         user_id = users_collection.insert_one({
             "username": username,
-            "hashed_password": hashed_password
+            "hashed_password": hashed_password,
+            "role": role
         }).inserted_id
-        logger.info(f"User {username} registered successfully with ID: {user_id}")
+        logger.info(f"User {username} registered successfully with ID: {user_id}, role: {role}")
         return str(user_id)
     except Exception as e:
         logger.error(f"Error inserting user: {e}")

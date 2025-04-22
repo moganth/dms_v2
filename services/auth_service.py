@@ -20,12 +20,34 @@ def get_user(username: str):
         user_dict = {
             "id": str(user["_id"]),
             "username": user["username"],
-            "hashed_password": user["hashed_password"]
+            "hashed_password": user["hashed_password"],
+            "role": user.get("role", "user")  # Default to "user" if role not found
         }
-        logger.info(f"User found: {username}")
+        logger.info(f"User found: {username}, role: {user_dict['role']}")
         return user_dict
     logger.info(f"User not found: {username}")
     return None
+
+from typing import List
+from fastapi import HTTPException, status
+
+def get_user_role(user: dict) -> str:
+    """Extract role from user dictionary"""
+    return user.get("role", "user")
+
+def role_required(allowed_roles: List[str]):
+    """Dependency to check if user role is in allowed roles"""
+    def check_role(current_user: dict = Depends(get_current_user)):
+        user_role = get_user_role(current_user)
+        if user_role not in allowed_roles:
+            logger.error(f"User {current_user['username']} with role {user_role} tried to access endpoint requiring roles: {allowed_roles}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have sufficient permissions to perform this action",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        return current_user
+    return check_role
 
 def verify_password(plain_password, hashed_password):
     result = pwd_context.verify(plain_password, hashed_password)
@@ -55,6 +77,28 @@ def authenticate_user(username: str, password: str):
     logger.info(f"User {username} Authenticated")
     return user
 
+# def get_current_user(token: str = Depends(oauth2_scheme)):
+#     credentials_exception = HTTPException(
+#         status_code=status.HTTP_401_UNAUTHORIZED,
+#         detail="Could not validate credentials",
+#         headers={"WWW-Authenticate": "Bearer"},
+#     )
+#     try:
+#         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+#         username: str = payload.get("sub")
+#         if username is None:
+#             logger.error(f"Username not found")
+#             raise credentials_exception
+#     except JWTError:
+#         logger.error(f"{credentials_exception}")
+#         raise credentials_exception
+#     user = get_user(username)
+#     if user is None:
+#         logger.error(f"{credentials_exception}")
+#         raise credentials_exception
+#     return user
+
+
 def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -65,13 +109,22 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
         if username is None:
-            logger.error(f"Username not found")
+            logger.error("Username not found")
             raise credentials_exception
+
+        # Extract role from token if present
+        role: str = payload.get("role", "user")
     except JWTError:
         logger.error(f"{credentials_exception}")
         raise credentials_exception
+
     user = get_user(username)
     if user is None:
         logger.error(f"{credentials_exception}")
         raise credentials_exception
+
+    # Ensure the role from DB is used (more secure than relying solely on token)
+    if "role" not in user:
+        user["role"] = role
+
     return user

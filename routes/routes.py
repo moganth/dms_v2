@@ -5,8 +5,6 @@ from fastapi.responses import PlainTextResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 
-# from schemas.docker_schema import (DockerImageSchema, DockerLoginSchema, BuildImagePayload, PushImagePayload,
-#                                    PullImagePayload, ContainerRunRequest, VolumeSchema, BuildRequest, User, Token)
 from schemas.docker_schema import *
 
 from services import docker_service as ds
@@ -14,7 +12,7 @@ from services.docker_service import build_image_from_repo
 from services.db_service import db, get_user_by_username, insert_user
 from services.auth_service import get_user, authenticate_user
 from config import ACCESS_TOKEN_EXPIRE_MINUTES, LOG_FILE, LOG_DIR
-from services.auth_service import get_current_user, create_access_token, get_password_hash
+from services.auth_service import role_required,get_current_user, create_access_token, get_password_hash
 
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -178,7 +176,7 @@ def restart_container(payload: ContainerRunRequest,
 
 @router.post("/container/remove")
 def remove_container(payload: ContainerRunRequest,
-                     current_user: dict = Depends(get_current_user)):
+                     current_user: dict = Depends(role_required["admin"])):
     try:
         result = ds.remove_container(payload.container_name)
         logger.info(f"container '{payload.container_name}' deleted successfully by {current_user['username']}")
@@ -194,7 +192,7 @@ def remove_container(payload: ContainerRunRequest,
 @limiter.limit("5/minute")
 def get_logs(container_name: str,
              request: Request,
-             current_user: dict = Depends(get_current_user)):
+             current_user: dict = Depends(role_required["admin", "user"])):
     logger.info(f"Container logs listed by {current_user['username']} on {container_name}")
     try:
         return ds.get_logs(container_name)
@@ -265,9 +263,14 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     if not user:
         logger.warning("Invalid credentials")
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    access_token = create_access_token(data={"sub": user["username"]},
-                                       expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-    logger.info({"access_token": access_token, "token_type": "bearer"})
+
+    # Include role in the token payload
+    access_token = create_access_token(
+        data={"sub": user["username"], "role": user.get("role", "user")},
+        expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+
+    logger.info(f"Token created for user {user['username']} with role {user.get('role', 'user')}")
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/protected")
