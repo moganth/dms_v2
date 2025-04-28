@@ -78,14 +78,22 @@ def build_image_from_repo(github_url: str, image_name: str, repo_name: str):
         return {"error": str(e)}
 
 # Push a Docker image to GHCR
-def push_image_to_ghcr(github_url: str, repo_name: str, image_name: str):
+def push_image_to_ghcr(github_url: str, repo_name: str, image_name: str, token: str):
     try:
-        # Here you can also verify if repo exists locally, clone if necessary (optional)
+        # Log in to GitHub Container Registry
+        login_command = [
+            "docker", "login", "ghcr.io", "-u", "moganth", "--password-stdin"
+        ]
+        # Pass the token securely
+        subprocess.run(login_command, input=token, text=True, check=True)
+
+        # Push the image to GHCR
         push_command = ["docker", "push", image_name]
         push_response = run_command(push_command)
         return push_response
-    except Exception as e:
-        return {"error": str(e)}
+    except subprocess.CalledProcessError as e:
+        return {"error": f"Failed to push image: {e.stderr.strip()}"}
+
 
 # Pull a Docker image from GHCR
 def pull_image_from_ghcr(github_url: str, repo_name: str, image_name: str):

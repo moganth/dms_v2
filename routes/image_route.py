@@ -30,13 +30,17 @@ def build_image(request: BuildRequest,
         "result": result
     }
 
+
 @image_router.post("/docker/push to ghcr")
-def push_image(request: GHCRImageRequest,
-               current_user: dict = Depends(get_current_user)):
+def push_image(request: GHCRImageRequest, current_user: dict = Depends(get_current_user)):
     github_url = request.github_url
     repo_name = request.repo_name
     image_name = request.image_name
-    result = push_image_to_ghcr(github_url, repo_name, image_name)
+    token = request.token  # Assuming the token is sent in the request
+
+    # Pass the token to the service function
+    result = push_image_to_ghcr(github_url, repo_name, image_name, token)
+
     logger.info(f"image '{request.image_name}' pushed to GHCR by {current_user['username']}")
     return {
         "message": f"image '{request.image_name}' pushed to GHCR by {current_user['username']}",
