@@ -40,7 +40,6 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
         logger.warning("Invalid credentials")
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    # Include role in the token payload
     access_token = create_access_token(
         data={"sub": user["username"], "role": user.get("role", "user")},
         expires_delta=timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)

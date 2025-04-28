@@ -6,7 +6,7 @@ from slowapi.util import get_remote_address
 from schemas.docker_schema import *
 
 from services import docker_service as ds
-from services.docker_service import build_image_from_repo
+from services.docker_service import build_image_from_repo, push_image_to_ghcr, pull_image_from_ghcr
 from services.auth_service import get_current_user
 
 from logger import get_logger
@@ -27,6 +27,32 @@ def build_image(request: BuildRequest,
     logger.info(f"image '{request.image_name}' build by {current_user['username']} from {request.github_url}")
     return {
         "message": f"image '{request.image_name}' build by {current_user['username']} from {request.github_url}",
+        "result": result
+    }
+
+@image_router.post("/docker/push to ghcr")
+def push_image(request: GHCRImageRequest,
+               current_user: dict = Depends(get_current_user)):
+    github_url = request.github_url
+    repo_name = request.repo_name
+    image_name = request.image_name
+    result = push_image_to_ghcr(github_url, repo_name, image_name)
+    logger.info(f"image '{request.image_name}' pushed to GHCR by {current_user['username']}")
+    return {
+        "message": f"image '{request.image_name}' pushed to GHCR by {current_user['username']}",
+        "result": result
+    }
+
+@image_router.post("/docker/pull from ghcr")
+def pull_image(request: GHCRImageRequest,
+               current_user: dict = Depends(get_current_user)):
+    github_url = request.github_url
+    repo_name = request.repo_name
+    image_name = request.image_name
+    result = pull_image_from_ghcr(github_url, repo_name, image_name)
+    logger.info(f"image '{request.image_name}' pulled from GHCR by {current_user['username']}")
+    return {
+        "message": f"image '{request.image_name}' pulled from GHCR by {current_user['username']}",
         "result": result
     }
 

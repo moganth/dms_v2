@@ -76,6 +76,25 @@ def build_image_from_repo(github_url: str, image_name: str, repo_name: str):
         return build_response
     except Exception as e:
         return {"error": str(e)}
+
+# Push a Docker image to GHCR
+def push_image_to_ghcr(github_url: str, repo_name: str, image_name: str):
+    try:
+        # Here you can also verify if repo exists locally, clone if necessary (optional)
+        push_command = ["docker", "push", image_name]
+        push_response = run_command(push_command)
+        return push_response
+    except Exception as e:
+        return {"error": str(e)}
+
+# Pull a Docker image from GHCR
+def pull_image_from_ghcr(github_url: str, repo_name: str, image_name: str):
+    try:
+        pull_command = ["docker", "pull", image_name]
+        pull_response = run_command(pull_command)
+        return pull_response
+    except Exception as e:
+        return {"error": str(e)}
 #--------------------------------------------------------------------------------------------------------------------
 
 def push_image(local_image_name: str, repository_name: str, username: str, password: str):
