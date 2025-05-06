@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dms-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dms
+  template:
+    metadata:
+      labels:
+        app: dms
+    spec:
+      serviceAccountName: pod-logs-reader
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - ip-172-31-20-47   # worker node's hostname(ip)
+                - ip-172-31-86-248  # master node's hostname(ip)
+      containers:
+      - name: dms-container
+        image: moganthkumar/moganth:latest
+        ports:
+        - containerPort: 8000
+        volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+      volumes:
+      - name: docker-socket
+        hostPath:
+          path: /var/run/docker.sock
+          type: Socket
