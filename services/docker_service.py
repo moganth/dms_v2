@@ -1,5 +1,6 @@
 import os
 import subprocess
+from uuid import uuid4
 
 import docker
 from kubernetes import client, config
@@ -205,6 +206,37 @@ def run_container(image_name: str, container_name: str, ports: dict = None, envi
         return {"status": "success", "message": f"Container '{container_name}' started successfully", "container_id": container.id}
     except Exception as e:
         return {"error": str(e)}
+
+
+def run_pod(image_name: str, container_name: str, container_port: int, namespace: str = "default"):
+    try:
+        pod_name = f"{container_name}-{str(uuid4())[:8]}"
+
+        pod_manifest = client.V1Pod(
+            metadata=client.V1ObjectMeta(name=pod_name, labels={"app": container_name}),
+            spec=client.V1PodSpec(
+                containers=[
+                    client.V1Container(
+                        name=container_name,
+                        image=image_name,
+                        ports=[client.V1ContainerPort(container_port=container_port)]
+                    )
+                ],
+                restart_policy="Never"
+            )
+        )
+
+        v1.create_namespaced_pod(namespace=namespace, body=pod_manifest)
+        return {
+            "status": "success",
+            "message": f"Pod '{pod_name}' created successfully using image '{image_name}'",
+            "pod_name": pod_name
+        }
+    except client.exceptions.ApiException as e:
+        raise Exception(f"Kubernetes API error: {e.reason}")
+    except Exception as e:
+        raise Exception(f"Unexpected error: {str(e)}")
+
 
 def stop_container(container_name: str):
     try:

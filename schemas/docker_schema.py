@@ -63,3 +63,8 @@ class User(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+class RunPodRequest(BaseModel):
+    image_name: str
+    container_name: str
+    container_port: int

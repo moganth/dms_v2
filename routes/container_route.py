@@ -34,6 +34,20 @@ def run_container(payload: ContainerRunRequest,
         logger.error(f"Error running the container {payload.container_name}, {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@container_router.post("/pod/run")
+def run_pod(payload: RunPodRequest,
+                  current_user: dict = Depends(get_current_user)):
+    try:
+        result = ds.run_pod(payload.image_name, payload.container_name, payload.container_port)
+        logger.info(f"Pod '{result['pod_name']}' created by {current_user['username']}")
+        return {
+            "message": f"Pod '{result['pod_name']}' created successfully by {current_user['username']}",
+            "result": result
+        }
+    except Exception as e:
+        logger.error(f"Error creating pod: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 @container_router.post("/container/stop")
 def stop_container(payload: ContainerRunRequest,
                    current_user: dict = Depends(get_current_user)):
