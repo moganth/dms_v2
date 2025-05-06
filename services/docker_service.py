@@ -10,18 +10,18 @@ from config import DOCKER_REGISTRY
 config.load_incluster_config()
 v1 = client.CoreV1Api()
 
-client = docker.from_env()
+docker_client = docker.from_env()
 
 def docker_login(username: str, password: str):
     try:
-        login_response = client.login(username=username, password=password, registry=DOCKER_REGISTRY)
+        login_response = docker_client.login(username=username, password=password, registry=DOCKER_REGISTRY)
         return {"status": "success", "message": "Logged in to Docker Hub"}
     except APIError as e:
         return {"error": str(e)}
 
 def build_image(dockerfile_path: str, image_name: str, dockerfile_name: str = "Dockerfile"):
     try:
-        image, logs = client.images.build(
+        image, logs = docker_client.images.build(
             path=dockerfile_path,
             tag=image_name,
             dockerfile=dockerfile_name,
@@ -113,14 +113,14 @@ def pull_image_from_ghcr(github_url: str, repo_name: str, image_name: str):
 def push_image(local_image_name: str, repository_name: str, username: str, password: str):
     try:
         # Login to Docker Hub
-        client.login(username=username, password=password)
+        docker_client.login(username=username, password=password)
 
         # Tag the local image with the Docker Hub repository name
-        image = client.images.get(local_image_name)
+        image = docker_client.images.get(local_image_name)
         image.tag(repository_name)
 
         # Push the image to Docker Hub
-        response = client.images.push(repository_name)
+        response = docker_client.images.push(repository_name)
         return f"Image '{local_image_name}' pushed as '{repository_name}' to Docker Hub.\nResponse:\n{response}"
     except Exception as e:
         raise Exception(f"Push failed: {e}")
@@ -128,13 +128,13 @@ def push_image(local_image_name: str, repository_name: str, username: str, passw
 def pull_image(image_name: str, repository_name: str):
     try:
         full_image_name = f"{repository_name}:{image_name.split(':')[-1]}"
-        image = client.images.pull(full_image_name)
+        image = docker_client.images.pull(full_image_name)
         return {"status": "success", "message": f"Image '{full_image_name}' pulled successfully"}
     except APIError as e:
         return {"error": str(e)}
 
 def list_images():
-    images = client.images.list()
+    images = docker_client.images.list()
     image_list = []
     for img in images:
         image_list.append({
@@ -146,8 +146,8 @@ def list_images():
 
 def delete_image(image_name: str):
     try:
-        client.images.get(image_name)
-        client.images.remove(image_name, force=True)
+        docker_client.images.get(image_name)
+        docker_client.images.remove(image_name, force=True)
         return {"status": "success", "message": f"Image {image_name} removed"}
     except docker.errors.ImageNotFound:
         return {"error": f"Image {image_name} not found"}
@@ -156,7 +156,7 @@ def delete_image(image_name: str):
 
 def get_logs(container_name: str):
     try:
-        container = client.containers.get(container_name)
+        container = docker_client.containers.get(container_name)
         logs = container.logs(timestamps=True).decode('utf-8')
         log_lines = logs.strip().split('\n')
         return {"container": container_name, "logs": log_lines}
@@ -179,7 +179,7 @@ def get_logs_with_pods(pod_name: str, container_name: str = None, namespace: str
 
 def docker_ps():
     try:
-        containers = client.containers.list()
+        containers = docker_client.containers.list()
         result = []
         for container in containers:
             result.append({
@@ -194,7 +194,7 @@ def docker_ps():
 
 def run_container(image_name: str, container_name: str, ports: dict = None, environment: dict = None, volumes: dict = None):
     try:
-        container = client.containers.run(
+        container = docker_client.containers.run(
             image_name,
             name=container_name,
             ports=ports,
@@ -208,7 +208,7 @@ def run_container(image_name: str, container_name: str, ports: dict = None, envi
 
 def stop_container(container_name: str):
     try:
-        container = client.containers.get(container_name)
+        container = docker_client.containers.get(container_name)
         container.stop()
         return {"status": "success", "message": f"Container '{container_name}' stopped"}
     except Exception as e:
@@ -216,7 +216,7 @@ def stop_container(container_name: str):
 
 def start_container(container_name: str):
     try:
-        container = client.containers.get(container_name)
+        container = docker_client.containers.get(container_name)
         container.start()
         return {"status": "success", "message": f"Container '{container_name}' started"}
     except Exception as e:
@@ -224,7 +224,7 @@ def start_container(container_name: str):
 
 def restart_container(container_name: str):
     try:
-        container = client.containers.get(container_name)
+        container = docker_client.containers.get(container_name)
         container.restart()
         return {"status": "success", "message": f"Container '{container_name}' restarted"}
     except Exception as e:
@@ -232,7 +232,7 @@ def restart_container(container_name: str):
 
 def remove_container(container_name: str):
     try:
-        container = client.containers.get(container_name)
+        container = docker_client.containers.get(container_name)
         container.remove()
         return {"status": "success", "message": f"Container '{container_name}' removed"}
     except Exception as e:
@@ -240,21 +240,21 @@ def remove_container(container_name: str):
 
 def create_volume(volume_name: str):
     try:
-        volume = client.volumes.create(name=volume_name)
+        volume = docker_client.volumes.create(name=volume_name)
         return {"status": "success", "message": f"Volume '{volume_name}' created", "volume_id": volume.id}
     except Exception as e:
         return {"error": str(e)}
 
 def list_volumes():
     try:
-        volumes = client.volumes.list()
+        volumes = docker_client.volumes.list()
         return [{"name": v.name, "driver": v.attrs.get("Driver")} for v in volumes]
     except Exception as e:
         return {"error": str(e)}
 
 def delete_volume(volume_name: str):
     try:
-        volume = client.volumes.get(volume_name)
+        volume = docker_client.volumes.get(volume_name)
         volume.remove()
         return {"status": "success", "message": f"Volume '{volume_name}' deleted"}
     except Exception as e:

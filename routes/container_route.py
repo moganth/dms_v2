@@ -15,7 +15,7 @@ from logger import get_logger
 logger = get_logger(__name__)
 
 
-client = docker.from_env()
+docker_client = docker.from_env()
 container_router = APIRouter()
 
 limiter = Limiter(key_func=get_remote_address)
