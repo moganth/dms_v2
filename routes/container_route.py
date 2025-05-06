@@ -1,6 +1,6 @@
 import os
 import docker
-from fastapi import HTTPException, APIRouter, Depends, Request
+from fastapi import HTTPException, APIRouter, Depends, Request, Query
 from fastapi.responses import PlainTextResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -100,6 +100,20 @@ def get_logs(container_name: str,
         return ds.get_logs(container_name)
     except Exception as e:
         logger.error(f"Error getting logs for container {container_name}: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@container_router.get("/logs/")
+def get_logs_with_pods(
+    pod_name: str = Query(..., description="Kubernetes Pod Name"),
+    container_name: str = Query(None, description="Container name inside the pod"),
+    request: Request = None,
+    current_user: dict = Depends(role_required(["admin", "user"]))
+):
+    logger.info(f"Fetching logs for pod={pod_name}, container={container_name} by {current_user['username']}")
+    try:
+        return ds.get_logs_with_pods(pod_name, container_name)
+    except Exception as e:
+        logger.error(f"Error: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @container_router.get("/ps")

@@ -2,8 +2,13 @@ import os
 import subprocess
 
 import docker
+from kubernetes import client, config
 from docker.errors import APIError
 from config import DOCKER_REGISTRY
+
+# Load cluster config
+config.load_incluster_config()
+v1 = client.CoreV1Api()
 
 client = docker.from_env()
 
@@ -157,6 +162,20 @@ def get_logs(container_name: str):
         return {"container": container_name, "logs": log_lines}
     except Exception as e:
         raise Exception(f"Failed to get logs for container '{container_name}': {e}")
+
+def get_logs_with_pods(pod_name: str, container_name: str = None, namespace: str = "default"):
+    try:
+        logs = v1.read_namespaced_pod_log(
+            name=pod_name,
+            namespace=namespace,
+            container=container_name,
+            timestamps=True,
+        )
+        return {"pod": pod_name, "logs": logs.strip().split("\n")}
+    except client.exceptions.ApiException as e:
+        raise Exception(f"Kubernetes API error: {e.reason}")
+    except Exception as e:
+        raise Exception(f"Unexpected error: {str(e)}")
 
 def docker_ps():
     try:
