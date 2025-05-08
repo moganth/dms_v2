@@ -31,8 +31,13 @@ spec:
         volumeMounts:
         - name: docker-socket
           mountPath: /var/run/docker.sock
+        - name: test-volume
+          mountPath: /app/logs
       volumes:
       - name: docker-socket
         hostPath:
           path: /var/run/docker.sock
           type: Socket
+      - name: test-volume
+        persistentVolumeClaim:
+          claimName: host-pvc

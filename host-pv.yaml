@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: host-pv
+spec:
+  capacity:
+    storage: 1Gi
+  volumeMode: FileSystem
+  #volumeMode: Block
+  accessModes:
+    - ReadWriteOnce
+    #- ReadOnlyMany -> can't use for hostPath because it only for singleNode
+    #- ReadWriteMany -> can't use for hostPath because it only for singleNode
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /data
+    type: DirectoryOrCreate
