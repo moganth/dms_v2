@@ -212,19 +212,50 @@ def run_pod(image_name: str, container_name: str, container_port: int, namespace
     try:
         pod_name = f"{container_name}-{str(uuid4())[:8]}"
 
-        pod_manifest = client.V1Pod(
-            metadata=client.V1ObjectMeta(name=pod_name, labels={"app": container_name}),
-            spec=client.V1PodSpec(
-                containers=[
-                    client.V1Container(
-                        name=container_name,
-                        image=image_name,
-                        ports=[client.V1ContainerPort(container_port=container_port)]
-                    )
-                ],
-                restart_policy="Never"
+        docker_sock_volume = client.V1Volume(
+            name="docker-sock",
+            host_path=client.V1HostPathVolumeSource(
+                path="/var/run/docker.sock",
+                type="Socket"
             )
         )
+
+        docker_sock_volume_mount = client.V1VolumeMount(
+            name = "docker-sock",
+            mount_path = "/var/run/docker.sock"
+        )
+
+        container = client.V1Container(
+            name = container_name,
+            image = image_name,
+            ports = [client.V1ContainerPort(container_port=container_port)],
+            volume_mounts=[docker_sock_volume_mount]
+        )
+
+        pod_spec = client.V1PodSpec(
+            containers=[container],
+            volumes=[docker_sock_volume],
+            restart_policy="Never"
+        )
+
+        pod_manifest = client.V1Pod(
+            metadata=client.V1ObjectMeta(name=pod_name, labels={"app": container_name}),
+            spec=pod_spec
+        )
+
+        # pod_manifest = client.V1Pod(
+        #     metadata=client.V1ObjectMeta(name=pod_name, labels={"app": container_name}),
+        #     spec=client.V1PodSpec(
+        #         containers=[
+        #             client.V1Container(
+        #                 name=container_name,
+        #                 image=image_name,
+        #                 ports=[client.V1ContainerPort(container_port=container_port)]
+        #             )
+        #         ],
+        #         restart_policy="Never"
+        #     )
+        # )
 
         v1.create_namespaced_pod(namespace=namespace, body=pod_manifest)
         return {
