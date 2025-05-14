@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: dms-virtualservice
+  namespace: moganthkumar
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - moganthkumar/dms-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /api
+      route:
+        - destination:
+            host: dms-service
+            port:
+              number: 8000

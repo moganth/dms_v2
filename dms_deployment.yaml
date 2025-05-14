@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: dms-deployment
+  namespace: moganthkumar
 spec:
   replicas: 3
   selector:
@@ -21,8 +22,8 @@ spec:
               - key: kubernetes.io/hostname
                 operator: In
                 values:
-                - ip-172-31-20-47   # worker node's hostname(ip)
-                - ip-172-31-86-248  # master node's hostname(ip)
+              #  - ip-172-31-20-47   # worker node's hostname(ip)
+                - k3s-server  # master node's hostname(ip)
       containers:
       - name: dms-container
         image: moganthkumar/moganth:latest

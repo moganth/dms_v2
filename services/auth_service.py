@@ -13,7 +13,7 @@ from typing import List
 logger = get_logger(__name__)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/app2/token")
 
 def get_user(username: str):
     user = get_user_by_username(username)
