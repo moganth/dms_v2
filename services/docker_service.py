@@ -8,8 +8,18 @@ from docker.errors import APIError
 from config import DOCKER_REGISTRY
 
 # Load cluster config
-config.load_incluster_config()
-v1 = client.CoreV1Api()
+# config.load_incluster_config()
+# v1 = client.CoreV1Api()
+v1 = None
+
+try:
+    if os.getenv("KUBERNETES_SERVICE_HOST"):
+        config.load_incluster_config()
+    else:
+        config.load_kube_config()
+    v1 = client.CoreV1Api()
+except Exception as e:
+    print(f"Kubernetes disabled: {e}")
 
 docker_client = docker.from_env()
 
